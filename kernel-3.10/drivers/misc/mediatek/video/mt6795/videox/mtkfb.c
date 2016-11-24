@@ -1678,6 +1678,19 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg
 #define COMPAT_MTKFB_GET_POWERSTATE		       MTK_IOR(21, compat_ulong_t)	/* 0: power off  1: power on */
 #define COMPAT_MTKFB_CAPTURE_FRAMEBUFFER       MTK_IOW(3, compat_ulong_t)
 
+#define MTKFB_CONFIG_IMMEDIATE_UPDATE_32        MTK_IOW(4, unsigned int)
+
+#define MTKFB_GET_DEFAULT_UPDATESPEED_32        MTK_IOR(17, unsigned int)
+#define MTKFB_GET_CURR_UPDATESPEED_32           MTK_IOR(18, unsigned int)
+#define MTKFB_CHANGE_UPDATESPEED_32             MTK_IOW(19, unsigned int)
+#define MTKFB_AEE_LAYER_EXIST_32                MTK_IOR(23, unsigned int)
+#define MTKFB_FACTORY_AUTO_TEST_32              MTK_IOR(25, unsigned int)
+#define MTKFB_META_RESTORE_SCREEN_32            MTK_IOW(101, unsigned int)
+
+#define FORWARD_IOCTL(name) \
+        case name##_32: \
+            return mtkfb_ioctl(info, name, arg);
+
 static int mtkfb_compat_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg)
 {
 	void __user *argp = (void __user *)arg;
@@ -1721,6 +1734,32 @@ static int mtkfb_compat_ioctl(struct fb_info *info, unsigned int cmd, unsigned l
 		primary_display_capture_framebuffer_ovl(*pbuf, eBGRA8888);
 		return 0;
 	}
+
+	FORWARD_IOCTL(MTKFB_CONFIG_IMMEDIATE_UPDATE)
+	FORWARD_IOCTL(MTKFB_GET_DEFAULT_UPDATESPEED)
+	FORWARD_IOCTL(MTKFB_GET_CURR_UPDATESPEED)
+	FORWARD_IOCTL(MTKFB_CHANGE_UPDATESPEED)
+	FORWARD_IOCTL(MTKFB_AEE_LAYER_EXIST)
+	FORWARD_IOCTL(MTKFB_FACTORY_AUTO_TEST)
+	FORWARD_IOCTL(MTKFB_META_RESTORE_SCREEN)
+
+	case MTKFB_LOCK_FRONT_BUFFER:
+	case MTKFB_UNLOCK_FRONT_BUFFER:
+	case MTKFB_GET_FRAMEBUFFER_MVA:
+	case MTKFB_POWEROFF:
+	case MTKFB_POWERON:
+	case MTKFB_GET_DISPLAY_IF_INFORMATION:
+	case MTKFB_SLT_AUTO_CAPTURE:
+
+#ifdef MTK_FB_OVERLAY_SUPPORT
+	case MTKFB_GET_OVERLAY_LAYER_INFO:
+	case MTKFB_SET_OVERLAY_LAYER:
+	case MTKFB_ERROR_INDEX_UPDATE_TIMEOUT:
+	case MTKFB_ERROR_INDEX_UPDATE_TIMEOUT_AEE:
+	case MTKFB_SET_VIDEO_LAYERS:
+	case MTKFB_TRIG_OVERLAY_OUT:
+#endif // MTK_FB_OVERLAY_SUPPORT
+		return mtkfb_ioctl(info, cmd, arg);
 
 	default:
 		DISPMSG("error, unknown mtkfb_compat_ioctl, info=%p, cmd nr=0x%08x, cmd size=0x%08x\n", info,
